@@ -29,15 +29,28 @@ class BaseRoBot(object):
                      # it is used only if the message has no relevent handler
                      '_fallback']
 
-    def __init__(self, token=None):
-        self.token = token
+    def __init__(self, settings_object):
         # Initialize ``type -> function`` maps
         self._handlers = dict((k, None) for k in self.message_types)
         self._handlers['_fallback'] = fallback_handler
+
         self.settings = settings
+
+        if isinstance(settings_object, dict):
+            pass
+        elif hasattr(settings_object, '__file__'):
+            pass
+        else:
+            raise Exception
+
+        assert 'token' in self.settings
+
         self._set_logger()
 
         self.app = Bottle()
+
+    def module_config(self, settings_module):
+        pass
 
     def _set_logger(self):
         formatter = logging.Formatter(self.settings.LOGGING_FORMAT)
@@ -121,7 +134,7 @@ class BaseRoBot(object):
         return handler(message)
 
     def check_signature(self, timestamp, nonce, signature):
-        sign = [self.token, timestamp, nonce]
+        sign = [self.settings.token, timestamp, nonce]
         sign.sort()
         sign = ''.join(sign)
         sign = hashlib.sha1(sign).hexdigest()
